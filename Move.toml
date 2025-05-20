@@ -1,0 +1,8 @@
+[package]
+name = "bearium"
+version = "0.1.2"
+license = "BUSL-1.1"
+edition = "2024.beta"
+
+[addresses]
+bearium = "0x0"
