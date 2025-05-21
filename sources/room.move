@@ -11,7 +11,7 @@ public(package) fun disburse<T>(
     charge: Option<Coin<T>>,
     mut credit: Option<Credit<T>>,
     face_bps: u32, // zero to odds
-    edge_bps: u16, // instant interest
+    edge_bps: u16, // instant rate
     ctx: &mut TxContext
 ) {
     // capture
@@ -24,16 +24,16 @@ public(package) fun disburse<T>(
         return
     };
     // default
-    let mut stake = 0;
-    charge.do_ref!(|c| stake = stake + c.value());
-    credit.do_ref!(|c| stake = stake + c.value());
-    if (stake > 0) {
-        let total = derive_proportion(stake, face_bps);
-        let gross = total - stake;
-        let yield = derive_proportion(total, edge_bps as u32);
-        let mut present = peer.wedge(gross, ctx);
-        if (yield > 0) {
-            let edge = present.withdraw(yield , ctx);
+    let mut stakes = 0;
+    charge.do_ref!(|c| stakes = stakes + c.value());
+    credit.do_ref!(|c| stakes = stakes + c.value());
+    if (stakes > 0) {
+        let rewards = derive_proportion(stakes, face_bps);
+        let surplus = rewards - stakes;
+        let instant = derive_proportion(rewards, edge_bps as u32);
+        let mut present = peer.wedge(surplus, ctx);
+        if (instant > 0) {
+            let edge = present.withdraw(instant , ctx);
             transfer::public_transfer(edge, peer.at());
         };
         if (credit.is_some()) present.join(credit.extract());
