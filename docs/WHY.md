@@ -16,6 +16,8 @@ No global clock. No sequence of truth. This protocol rejects both central and de
 
 ## What this protocol is about
 
+The Winner’s Dilemma — Choice Between Certainty and Confidence.
+
 1. After Winning: Cash Out or Double Down
 
 Winners face a choice: realize gains now, or re-enter with growing statistical confidence. This protocol encodes post-win behavior, not randomness — where trust in convergence, not luck, defines risk appetite.
