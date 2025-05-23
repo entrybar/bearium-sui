@@ -96,16 +96,22 @@ public fun value<T>(self: &Credit<T>): u64 {
 // The Mass's Rights.
 //-------------------
 
-public fun redeem<T>(peer: &mut Peer<T>, mut asset: Credit<T>, ctx: &mut TxContext): Option<Coin<T>> {
-    assert!(asset.peer_id == peer.id.to_inner(), EBadPeer);
-    assert!(asset.alpha > 0, EZero);
-    let reward = honor(peer, &mut asset, ctx);
-    if (asset.alpha == 0) {
-        draw(asset);
+public fun redeem_available<T>(peer: &mut Peer<T>, credit: &mut Credit<T>, ctx: &mut TxContext): Coin<T> {
+    assert!(credit.peer_id == peer.id.to_inner(), EBadPeer);
+    assert!(credit.alpha > 0, EZero);
+    let mut present = honor(peer, credit, ctx);
+    if (present.is_none()) present.fill(coin::zero(ctx));
+    present.destroy_some()
+}
+
+public fun redeem_with_debt<T>(peer: &mut Peer<T>, mut credit: Credit<T>, ctx: &mut TxContext): Coin<T> {
+    let reward = redeem_available(peer, &mut credit, ctx);
+    if (credit.alpha == 0) {
+        draw(credit);
         return reward
     };
     // Liability is a Block.
-    let block = prefer(asset, ctx);
+    let block = prefer(credit, ctx);
     peer.chain.push_back(block);
     reward
 }
@@ -236,17 +242,12 @@ fun honor<T>(self: &mut Peer<T>, asset: &mut Credit<T>, ctx: &mut TxContext): Op
     };
 
     // consolidate
-    if (scale.length() == 0) {
-        scale.destroy_empty();
-        return option::none()
-    };
-    let mut present = scale.pop_back();
-    loop {
-        if (scale.length() == 0) break;
-        present.join(scale.pop_back());
-    };
-    scale.destroy_empty();
-    option::some(present)
+    let mut present: Option<Coin<T>> = option::none();
+    scale.do!(|c| {
+        if (present.is_none()) present.fill(c)
+        else present.borrow_mut().join(c);
+    });
+    present
 }
 
 fun turn<T>(self: &mut Peer<T>, metal: &mut Credit<T>, ctx: &mut TxContext): Option<Coin<T>> {
